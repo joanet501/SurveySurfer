@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="'Dashboard - ' + ${survey.title}">Dashboard</title>
+    <meta charset="UTF-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${survey.title}">Survey title</h1>
+    <p>Total respuestas: <strong th:text="${totalResponses}">0</strong></p>
+
+    <h2>Estadísticas por pregunta</h2>
+
+    <div th:each="qs : ${questionStats}">
+        <h3 th:text="${qs.questionText}">Pregunta</h3>
+        <p>Tipo: <span th:text="${qs.type}">TYPE</span></p>
+
+        <!-- For RADIO/MULTIPLE/YES_NO -->
+        <div th:if="${qs.optionCounts != null}">
+            <table border="1" cellpadding="4" cellspacing="0">
+                <thead>
+                <tr>
+                    <th>Opción</th>
+                    <th>Conteo</th>
+                    <th>%</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="entry : ${qs.optionCounts.entrySet()}">
+                    <td th:text="${entry.key}">Option</td>
+                    <td th:text="${entry.value}">0</td>
+                    <td th:text="${(entry.value * 100.0) / (qs.totalAnswers == 0 ? 1 : qs.totalAnswers)} + ' %'">
+                        0 %
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- For NUMERIC/SCALE -->
+        <div th:if="${qs.average != null}">
+            <p>
+                Promedio: <strong th:text="${qs.average}">0</strong>,
+                Mínimo: <strong th:text="${qs.min}">0</strong>,
+                Máximo: <strong th:text="${qs.max}">0</strong>
+            </p>
+        </div>
+
+        <hr/>
+    </div>
+
+    <!-- Simple Chart.js example: first question with optionCounts -->
+    <div th:if="${#lists.size(questionStats) > 0}">
+        <h2>Gráfico (primera pregunta categórica)</h2>
+        <canvas id="questionChart" width="400" height="200"></canvas>
+
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const stats = /*[[${questionStats}]]*/ [];
+            // Find first question with optionCounts
+            let chartData = null;
+            for (let i = 0; i < stats.length; i++) {
+                if (stats[i].optionCounts) {
+                    chartData = stats[i];
+                    break;
+                }
+            }
+
+            if (chartData) {
+                const labels = Object.keys(chartData.optionCounts);
+                const counts = Object.values(chartData.optionCounts);
+
+                const ctx = document.getElementById('questionChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: chartData.questionText,
+                            data: counts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            /*]]>*/
+        </script>
+    </div>
+</div>
+</body>
+</html>

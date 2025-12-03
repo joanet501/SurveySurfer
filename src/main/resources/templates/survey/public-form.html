@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${survey.title}">Survey</title>
+    <meta charset="UTF-8"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${survey.title}">Survey Title</h1>
+    <p th:text="${survey.description}">Survey description...</p>
+
+    <form th:action="@{|/s/${survey.slug}|}" th:object="${responseForm}" method="post">
+        <div th:if="${errors != null and !errors.isEmpty()}" style="color:red;">
+            Por favor corrige los errores marcados en el formulario.
+        </div>
+
+
+        <div th:each="q : ${survey.questions}" class="question-block">
+            <div class="question-text">
+                <span th:text="${q.text}">Question text</span>
+                <span th:if="${q.required}" style="color:red;">*</span>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- RADIO -->
+            <div th:if="${q.type.name() == 'RADIO'}">
+                <div th:each="opt : ${q.options}">
+                    <label>
+                        <input type="radio"
+                               th:name="${'answers[' + q.id + ']'}"
+                               th:value="${opt}"
+                               required="required"
+                               th:attr="required=${q.required} ? 'required' : null"/>
+                        <span th:text="${opt}">Option</span>
+                    </label>
+                </div>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- MULTIPLE (checkbox) -->
+            <div th:if="${q.type.name() == 'MULTIPLE'}">
+                <!-- We’ll store comma-separated values in a single field for simplicity:
+                     JS will join selected checkboxes into a hidden input.
+                 -->
+                <div th:each="opt : ${q.options}">
+                    <label>
+                        <input type="checkbox"
+                               th:value="${opt}"
+                               th:attr="data-question-id=${q.id}"/>
+                        <span th:text="${opt}">Option</span>
+                    </label>
+                </div>
+                <input type="hidden"
+                       th:name="${'answers[' + q.id + ']'}"
+                       th:attr="data-question-hidden=${q.id}"/>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- NUMERIC -->
+            <div th:if="${q.type.name() == 'NUMERIC'}">
+                <input type="number"
+                       step="any"
+                       th:name="${'answers[' + q.id + ']'}"
+                       th:attr="required=${q.required} ? 'required' : null"
+                       class="form-control"/>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- OPEN_TEXT -->
+            <div th:if="${q.type.name() == 'OPEN_TEXT'}">
+                <textarea th:name="${'answers[' + q.id + ']'}"
+                          th:attr="required=${q.required} ? 'required' : null"
+                          class="form-control"
+                          rows="3"></textarea>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- SCALE -->
+            <div th:if="${q.type.name() == 'SCALE'}">
+                <!-- For now just simple numeric 1-5, later we’ll parse from optionsJson -->
+                <input type="number"
+                       min="1"
+                       max="5"
+                       th:name="${'answers[' + q.id + ']'}"
+                       th:attr="required=${q.required} ? 'required' : null"
+                       class="form-control"/>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- DATE -->
+            <div th:if="${q.type.name() == 'DATE'}">
+                <input type="date"
+                       th:name="${'answers[' + q.id + ']'}"
+                       th:attr="required=${q.required} ? 'required' : null"
+                       class="form-control"/>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- EMAIL -->
+            <div th:if="${q.type.name() == 'EMAIL'}">
+                <input type="email"
+                       th:name="${'answers[' + q.id + ']'}"
+                       th:attr="required=${q.required} ? 'required' : null"
+                       class="form-control"/>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <!-- YES_NO (radio) -->
+            <div th:if="${q.type.name() == 'YES_NO'}">
+                <label>
+                    <input type="radio"
+                           th:name="${'answers[' + q.id + ']'}"
+                           value="YES"
+                           th:attr="required=${q.required} ? 'required' : null"/> Sí
+                </label>
+                <label>
+                    <input type="radio"
+                           th:name="${'answers[' + q.id + ']'}"
+                           value="NO"/> No
+                </label>
+            </div>
+            <div th:if="${errors != null and errors[q.id] != null}" style="color:red;">
+                <small th:text="${errors[q.id]}">Mensaje de error</small>
+            </div>
+            <hr/>
+        </div>
+
+        <button type="submit">Enviar</button>
+    </form>
+</div>
+
+<script th:src="@{/js/multiple-question.js}"></script>
+</body>
+</html>
