@@ -1,9 +1,8 @@
-package com.ahorahathayoga.SurveySurfer.dto;
+package com.ahorahathayoga.SurveySurfer.dto.survey;
 
 import com.ahorahathayoga.SurveySurfer.enums.QuestionType;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -11,29 +10,35 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SurveyResponseDto {
+public class SurveyViewDto {
 
     private Long id;
-    private String username;
-    private QuestionType questionType;
     private String title;
-    private String slug;
     private String description;
-    private LocalDateTime createdAt;
+    private String slug;
 
-    private List<QuestionDto> questions;
+    private List<QuestionViewDto> questions;
 
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class QuestionDto {
+    public static class QuestionViewDto {
         private Long id;
         private String text;
         private QuestionType type;
         private boolean required;
         private Integer displayOrder;
+
+        /**
+         * Parsed options for RADIO / MULTIPLE, etc.
+         * e.g. ["Sí","No","Tal vez"]
+         */
         private List<String> options;
+
+        /**
+         * For SCALE questions, you might later extend with min, max, labels, etc.
+         */
     }
 }

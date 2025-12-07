@@ -1,6 +1,6 @@
 package com.ahorahathayoga.SurveySurfer.util;
 
-import com.ahorahathayoga.SurveySurfer.dto.SurveyViewDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
 import com.ahorahathayoga.SurveySurfer.model.Question;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import com.fasterxml.jackson.core.type.TypeReference;

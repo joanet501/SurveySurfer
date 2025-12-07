@@ -1,7 +1,7 @@
 package com.ahorahathayoga.SurveySurfer.service;
 
-import com.ahorahathayoga.SurveySurfer.dto.QuestionStatsDto;
-import com.ahorahathayoga.SurveySurfer.dto.SurveyValidationResult;
+import com.ahorahathayoga.SurveySurfer.dto.stats.QuestionStatsDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyValidationResult;
 import com.ahorahathayoga.SurveySurfer.enums.QuestionType;
 import com.ahorahathayoga.SurveySurfer.model.Answer;
 import com.ahorahathayoga.SurveySurfer.model.Question;

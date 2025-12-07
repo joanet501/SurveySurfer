@@ -1,7 +1,7 @@
 package com.ahorahathayoga.SurveySurfer.util;
 
-import com.ahorahathayoga.SurveySurfer.dto.SurveyCreateUpdateDto;
-import com.ahorahathayoga.SurveySurfer.dto.SurveyResponseDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyCreateUpdateDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
 import com.ahorahathayoga.SurveySurfer.enums.QuestionType;
 import com.ahorahathayoga.SurveySurfer.model.Question;
 import com.ahorahathayoga.SurveySurfer.model.Survey;

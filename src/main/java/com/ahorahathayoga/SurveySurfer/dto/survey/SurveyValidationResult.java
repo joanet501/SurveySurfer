@@ -1,4 +1,4 @@
-package com.ahorahathayoga.SurveySurfer.dto;
+package com.ahorahathayoga.SurveySurfer.dto.survey;
 
 import lombok.Getter;
 

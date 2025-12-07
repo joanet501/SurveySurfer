@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthApiController {
+public class AuthController {
 
     private final AuthService authService;
 
@@ -27,8 +27,7 @@ public class AuthApiController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "id", user.getId(),
                     "username", user.getUsername(),
-                    "email", user.getEmail(),
-                    "role", user.getRole()
+                    "email", user.getEmail()
             ));
         } catch (IllegalArgumentException ex) {
             return badRequest(ex.getMessage(), httpReq.getRequestURI());

@@ -1,8 +1,8 @@
 package com.ahorahathayoga.SurveySurfer.controller.api;
 
 import com.ahorahathayoga.SurveySurfer.dto.ApiErrorResponse;
-import com.ahorahathayoga.SurveySurfer.dto.SurveyCreateUpdateDto;
-import com.ahorahathayoga.SurveySurfer.dto.SurveyResponseDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyCreateUpdateDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/surveys")
 @RequiredArgsConstructor
-public class SurveyApiController {
+public class SurveyController {
 
     private final SurveyService surveyService;
     private final UserRepository userRepository;

@@ -1,4 +1,4 @@
-package com.ahorahathayoga.SurveySurfer.dto;
+package com.ahorahathayoga.SurveySurfer.dto.stats;
 
 import com.ahorahathayoga.SurveySurfer.enums.QuestionType;
 import lombok.*;

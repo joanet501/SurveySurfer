@@ -1,6 +1,7 @@
 package com.ahorahathayoga.SurveySurfer.service;
 
 import com.ahorahathayoga.SurveySurfer.dto.AuthDtos;
+import com.ahorahathayoga.SurveySurfer.enums.UserRole;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
 import com.ahorahathayoga.SurveySurfer.util.JwtTokenUtil;
@@ -31,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole()) // maybe force ADMIN only via config
+                .role(UserRole.PUBLIC) // Default user role is PUBLIC (can change later with patch user role)
                 .build();
 
         return userRepository.save(user);
