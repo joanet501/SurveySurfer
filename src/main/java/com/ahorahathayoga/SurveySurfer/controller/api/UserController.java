@@ -3,6 +3,7 @@ package com.ahorahathayoga.SurveySurfer.controller.api;
 
 import com.ahorahathayoga.SurveySurfer.dto.ApiErrorResponse;
 import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
+import com.ahorahathayoga.SurveySurfer.enums.UserRole;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
 import com.ahorahathayoga.SurveySurfer.service.user.UserService;
@@ -55,8 +56,32 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<?> changeUserRole(@PathVariable Long id, @RequestBody UserRole role, HttpServletRequest httpReq)
+    {
+        //Falta cambiar la validación. Ahora mismo si se envia un rol diferente de lo que hay en enum, devuelve 403
+        if(role != UserRole.ADMIN && role != UserRole.RESEARCHER && role != UserRole.PUBLIC){ //nunca entra aqui (crear un dto de validacion)
+            return badRequest("Role doesn't exist", httpReq.getRequestURI());
+        }
+        User user = userService.findOne(id);
+        if(user == null){
+            return notFound("User not found", httpReq.getRequestURI());
+        }
+        user.setRole(role);
+        UserViewDto userViewDto = new UserViewDto(
+        );
+        userViewDto.setId(user.getId());
+        userViewDto.setUsername(user.getUsername());
+        userViewDto.setEmail(user.getEmail());
+        userViewDto.setRole(user.getRole());
+        return ResponseEntity.ok(userViewDto);
+    }
 
 
+
+
+    //responses
 
     private ResponseEntity<ApiErrorResponse> notFound(String message, String path) {
         ApiErrorResponse error = ApiErrorResponse.builder()
