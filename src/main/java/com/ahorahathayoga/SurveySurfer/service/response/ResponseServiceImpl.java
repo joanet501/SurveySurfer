@@ -1,4 +1,4 @@
-package com.ahorahathayoga.SurveySurfer.service;
+package com.ahorahathayoga.SurveySurfer.service.response;
 
 import com.ahorahathayoga.SurveySurfer.dto.stats.QuestionStatsDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyValidationResult;

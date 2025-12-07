@@ -6,7 +6,7 @@ import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
-import com.ahorahathayoga.SurveySurfer.service.SurveyService;
+import com.ahorahathayoga.SurveySurfer.service.survey.SurveyService;
 import com.ahorahathayoga.SurveySurfer.util.SurveyApiMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

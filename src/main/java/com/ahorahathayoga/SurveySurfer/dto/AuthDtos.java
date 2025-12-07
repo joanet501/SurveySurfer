@@ -30,4 +30,13 @@ public class AuthDtos {
         private String email;
         private UserRole role;
     }
+
+    @Builder
+    @Getter
+    @Setter
+    public static class AuthMeResponse {
+        private String username;
+        private String email;
+        private UserRole role;
+    }
 }

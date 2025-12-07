@@ -1,4 +1,4 @@
-package com.ahorahathayoga.SurveySurfer.service;
+package com.ahorahathayoga.SurveySurfer.service.survey;
 
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 

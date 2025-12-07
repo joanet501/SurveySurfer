@@ -1,4 +1,4 @@
-package com.ahorahathayoga.SurveySurfer.service;
+package com.ahorahathayoga.SurveySurfer.service.auth;
 
 import com.ahorahathayoga.SurveySurfer.dto.AuthDtos;
 import com.ahorahathayoga.SurveySurfer.enums.UserRole;
@@ -6,6 +6,8 @@ import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
 import com.ahorahathayoga.SurveySurfer.util.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -56,4 +58,25 @@ public class AuthServiceImpl implements AuthService {
                 .role(user.getRole())
                 .build();
     }
+
+    @Override
+    public AuthDtos.AuthMeResponse me(){
+        String username = getCurrentUsername();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("No content"));
+        return AuthDtos.AuthMeResponse.builder()
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
+    }
+
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if(auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        return auth.getPrincipal().toString();
+    }
+
 }

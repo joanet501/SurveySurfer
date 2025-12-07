@@ -31,7 +31,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/s/**",                     // public survey form
-                                "/api/auth/**",             // login/register
+                                "/api/auth/login", "/api/auth/register",            // login/register
                                 "/api/surveys/slug/**"      // get survey by slug (public)
                         ).permitAll()
                         .requestMatchers("/api/surveys/**", "/admin/**")

@@ -3,7 +3,7 @@ package com.ahorahathayoga.SurveySurfer.controller.api;
 import com.ahorahathayoga.SurveySurfer.dto.ApiErrorResponse;
 import com.ahorahathayoga.SurveySurfer.dto.AuthDtos;
 import com.ahorahathayoga.SurveySurfer.model.User;
-import com.ahorahathayoga.SurveySurfer.service.AuthService;
+import com.ahorahathayoga.SurveySurfer.service.auth.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -44,6 +44,17 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> me(HttpServletRequest httpReq) {
+        try {
+            AuthDtos.AuthMeResponse response = authService.me();
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException ex) {
+            return noContent(ex.getMessage(), httpReq.getRequestURI());
+        }
+    }
+
+
     private ResponseEntity<ApiErrorResponse> badRequest(String message, String path) {
         ApiErrorResponse error = ApiErrorResponse.builder()
                 .timestamp(Instant.now())
@@ -64,5 +75,18 @@ public class AuthController {
                 .path(path)
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+
+
+    private ResponseEntity<ApiErrorResponse> noContent(String message, String path) {
+        ApiErrorResponse error = ApiErrorResponse.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.NO_CONTENT.value())
+                .error(HttpStatus.NO_CONTENT.getReasonPhrase())
+                .message(message)
+                .path(path)
+                .build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(error);
     }
 }
