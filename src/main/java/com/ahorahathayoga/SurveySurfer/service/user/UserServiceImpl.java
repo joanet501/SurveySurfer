@@ -24,6 +24,16 @@ public class UserServiceImpl implements UserService{
         return users.map(this::convertToDto);
     }
 
+    @Override
+    public UserViewDto findById(Long id) {
+        return convertToDto(userRepository.findById(id).orElse(null));
+    }
+
+    @Override
+    public User update(User user) {
+        return null;
+    }
+
     // helpers
     private UserViewDto convertToDto(User user) {
         return modelMapper.map(user, UserViewDto.class);
