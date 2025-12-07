@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/users")
@@ -47,8 +48,8 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> findUser(@PathVariable Long id, HttpServletRequest httpReq)
     {
-        UserViewDto user = userService.findById(id);
-        if(user == null){
+        Optional<UserViewDto> user = userService.findById(id);
+        if(user.isEmpty()){
             return notFound("User not found", httpReq.getRequestURI());
         }
         return ResponseEntity.ok(user);
