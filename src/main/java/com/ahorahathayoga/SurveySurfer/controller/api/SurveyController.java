@@ -3,12 +3,17 @@ package com.ahorahathayoga.SurveySurfer.controller.api;
 import com.ahorahathayoga.SurveySurfer.dto.ApiErrorResponse;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyCreateUpdateDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
+import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
 import com.ahorahathayoga.SurveySurfer.service.survey.SurveyService;
 import com.ahorahathayoga.SurveySurfer.util.SurveyApiMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,10 +38,16 @@ public class SurveyController {
 
     // GET /api/surveys
     @GetMapping
-    public List<SurveyResponseDto> listSurveys() {
-        return surveyService.findAll().stream()
-                .map(SurveyApiMapper::toResponseDto)
-                .collect(Collectors.toList());
+    public ResponseEntity<?> listSurveys(@RequestParam int page, @RequestParam int size) {
+        if(page < 0 || size < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SurveyViewDto> surveysPage = surveyService.findAll(pageable);
+        if(surveysPage.getTotalElements() == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(surveysPage);
     }
 
     // GET /api/surveys/{id}

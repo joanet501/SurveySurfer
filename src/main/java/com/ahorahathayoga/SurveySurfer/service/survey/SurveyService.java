@@ -1,6 +1,10 @@
 package com.ahorahathayoga.SurveySurfer.service.survey;
 
+import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
+import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +19,7 @@ public interface SurveyService {
 
     Optional<Survey> findWithQuestionsBySlug(String slug);
 
-    List<Survey> findAll();
+    Page<SurveyViewDto> findAll(Pageable pageable);
 
     void deleteSurvey(Long id);
 }
