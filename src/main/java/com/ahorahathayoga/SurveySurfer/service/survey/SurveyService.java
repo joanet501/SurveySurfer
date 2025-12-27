@@ -1,5 +1,6 @@
 package com.ahorahathayoga.SurveySurfer.service.survey;
 
+import com.ahorahathayoga.SurveySurfer.dto.submission.SurveySubmissionDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
 import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
@@ -22,4 +23,8 @@ public interface SurveyService {
     Page<SurveyViewDto> findAll(Pageable pageable);
 
     void deleteSurvey(Long id);
+
+    Survey updateStatus(Long id, com.ahorahathayoga.SurveySurfer.enums.SurveyStatus status);
+
+    void submitResponse(Long surveyId, SurveySubmissionDto submissionDto, String ipAddress, String userAgent);
 }

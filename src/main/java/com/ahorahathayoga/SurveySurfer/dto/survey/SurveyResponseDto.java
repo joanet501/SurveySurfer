@@ -1,6 +1,7 @@
 package com.ahorahathayoga.SurveySurfer.dto.survey;
 
 import com.ahorahathayoga.SurveySurfer.enums.QuestionType;
+import com.ahorahathayoga.SurveySurfer.enums.SurveyStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class SurveyResponseDto {
     private String slug;
     private String description;
     private LocalDateTime createdAt;
+    private SurveyStatus surveyStatus;
 
     private List<QuestionDto> questions;
 

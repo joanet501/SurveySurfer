@@ -28,6 +28,7 @@ public class SurveyApiMapper {
                 .slug(survey.getSlug())
                 .description(survey.getDescription())
                 .createdAt(survey.getCreatedAt())
+                .surveyStatus(survey.getStatus())
                 .questions(
                         survey.getQuestions().stream()
                                 .sorted((q1, q2) -> {

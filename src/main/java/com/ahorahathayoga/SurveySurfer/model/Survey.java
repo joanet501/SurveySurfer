@@ -1,5 +1,6 @@
 package com.ahorahathayoga.SurveySurfer.model;
 
+import com.ahorahathayoga.SurveySurfer.enums.SurveyStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -22,17 +23,22 @@ public class Survey {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(nullable = true, length = 200)
+    @Column(nullable = true, length = 200, unique = true)
+
     private String slug;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(nullable = false)
+    private SurveyStatus status=SurveyStatus.DRAFT;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
+
 
     // Helper methods (opcional pero útil)
     public void addQuestion(Question question) {

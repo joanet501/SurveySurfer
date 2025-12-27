@@ -22,4 +22,14 @@ public class ApiErrorResponse {
      * Extra details, like field errors.
      */
     private Map<String, Object> details;
+
+    // Nested class for validation errors if you want a more structured 'details'
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ValidationError {
+        private String field;
+        private String message;
+    }
 }

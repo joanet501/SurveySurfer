@@ -1,13 +1,12 @@
 package com.ahorahathayoga.SurveySurfer.controller.api;
 
-import com.ahorahathayoga.SurveySurfer.dto.ApiErrorResponse;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyCreateUpdateDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
-import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import com.ahorahathayoga.SurveySurfer.model.User;
 import com.ahorahathayoga.SurveySurfer.repository.UserRepository;
+import com.ahorahathayoga.SurveySurfer.service.survey.SurveyAuthorizationService;
 import com.ahorahathayoga.SurveySurfer.service.survey.SurveyService;
 import com.ahorahathayoga.SurveySurfer.util.SurveyApiMapper;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.OptionalInt;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/surveys")
@@ -34,121 +30,111 @@ public class SurveyController {
 
     private final SurveyService surveyService;
     private final UserRepository userRepository;
-
+    private final SurveyAuthorizationService surveyAuthorizationService;
 
     // GET /api/surveys
     @GetMapping
-    public ResponseEntity<?> listSurveys(@RequestParam int page, @RequestParam int size) {
-        if(page < 0 || size < 0) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<Page<SurveyViewDto>> listSurveys(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (page < 0 || size < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Page and size must be non-negative");
         }
+
         Pageable pageable = PageRequest.of(page, size);
         Page<SurveyViewDto> surveysPage = surveyService.findAll(pageable);
-        if(surveysPage.getTotalElements() == 0) {
-            return ResponseEntity.notFound().build();
-        }
         return ResponseEntity.ok(surveysPage);
     }
 
     // GET /api/surveys/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<?> getSurveyById(@PathVariable Long id, HttpServletRequest request) {
-        var optSurvey = surveyService.findById(id);
-        if (optSurvey.isEmpty()) {
-            return notFound("Survey not found", request.getRequestURI());
-        }
+    public ResponseEntity<SurveyResponseDto> getSurveyById(@PathVariable Long id) {
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
 
-        SurveyResponseDto dto = SurveyApiMapper.toResponseDto(optSurvey.get());
+        User currentUser = getCurrentUserOrNull();
+        surveyAuthorizationService.checkCanView(survey, currentUser);
+
+        SurveyResponseDto dto = SurveyApiMapper.toResponseDto(survey);
         return ResponseEntity.ok(dto);
     }
 
     // GET /api/surveys/slug/{slug}
     @GetMapping("/slug/{slug}")
-    public ResponseEntity<?> getSurveyBySlug(@PathVariable String slug, HttpServletRequest request) {
-        var optSurvey = surveyService.findWithQuestionsBySlug(slug);
-        if (optSurvey.isEmpty()) {
-            return notFound("Survey not found", request.getRequestURI());
-        }
+    public ResponseEntity<SurveyResponseDto> getSurveyBySlug(@PathVariable String slug) {
+        Survey survey = surveyService.findWithQuestionsBySlug(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
 
-        SurveyResponseDto dto = SurveyApiMapper.toResponseDto(optSurvey.get());
+        User currentUser = getCurrentUserOrNull();
+        surveyAuthorizationService.checkCanView(survey, currentUser);
+
+        SurveyResponseDto dto = SurveyApiMapper.toResponseDto(survey);
         return ResponseEntity.ok(dto);
     }
 
     // POST /api/surveys
     @PostMapping
-    public ResponseEntity<?> createSurvey( @RequestBody SurveyCreateUpdateDto dto, HttpServletRequest request) {
-        // Basic validation similar to $request->validate()
-        var errors = validateSurveyDto(dto);
-        if (!errors.isEmpty()) {
-            return badRequest("Validation failed", errors, request.getRequestURI());
-        }
+    public ResponseEntity<SurveyResponseDto> createSurvey(@RequestBody SurveyCreateUpdateDto dto) {
+        validateSurveyDto(dto);
+
         Survey survey = new Survey();
         SurveyApiMapper.applyCreateUpdateDtoToEntity(dto, survey);
 
-        String username = getCurrentUsername();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        survey.setUser(user);
+        User currentUser = getCurrentUser();
+        survey.setUser(currentUser);
 
         Survey saved = surveyService.createSurvey(survey);
-
         SurveyResponseDto responseDto = SurveyApiMapper.toResponseDto(saved);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
     // PUT /api/surveys/{id}
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSurvey(
+   /* @PutMapping("/{id}")
+    public ResponseEntity<SurveyResponseDto> updateSurvey(
             @PathVariable Long id,
-            @RequestBody SurveyCreateUpdateDto dto,
-            HttpServletRequest request
-    ) {
-        var errors = validateSurveyDto(dto);
-        if (!errors.isEmpty()) {
-            return badRequest("Validation failed", errors, request.getRequestURI());
-        }
+            @RequestBody SurveyCreateUpdateDto dto) {
+
+        validateSurveyDto(dto);
 
         Survey existing = surveyService.findById(id)
-                .orElse(null);
-        if (existing == null) {
-            return notFound("Survey not found", request.getRequestURI());
-        }
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanEdit(existing, currentUser);
 
         SurveyApiMapper.applyCreateUpdateDtoToEntity(dto, existing);
-        Survey saved = surveyService.createSurvey(existing);
+        Survey saved = surveyService.updateSurvey(existing);
 
         SurveyResponseDto responseDto = SurveyApiMapper.toResponseDto(saved);
         return ResponseEntity.ok(responseDto);
     }
-
+*/
     // DELETE /api/surveys/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSurvey(
-            @PathVariable Long id,
-            HttpServletRequest request
-    ) {
+    public ResponseEntity<Void> deleteSurvey(@PathVariable Long id) {
         Survey existing = surveyService.findById(id)
-                .orElse(null);
-        if (existing == null) {
-            return notFound("Survey not found", request.getRequestURI());
-        }
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanDelete(existing, currentUser);
 
         surveyService.deleteSurvey(id);
         return ResponseEntity.noContent().build();
     }
 
-    // --- helpers ---
+    // --- Helpers ---
 
-    private Map<String, String> validateSurveyDto(SurveyCreateUpdateDto dto) {
-        java.util.Map<String, String> errors = new java.util.HashMap<>();
+    private void validateSurveyDto(SurveyCreateUpdateDto dto) {
+        Map<String, String> errors = new HashMap<>();
+
         if (dto.getTitle() == null || dto.getTitle().isBlank()) {
             errors.put("title", "Title is required");
         }
         if (dto.getSlug() == null || dto.getSlug().isBlank()) {
             errors.put("slug", "Slug is required");
         }
-        // optionally: regex for slug, uniqueness check (slug exists, etc.)
-        // Here we skip uniqueness due to complexity, but you could check via repo.
-
         if (dto.getQuestions() == null || dto.getQuestions().isEmpty()) {
             errors.put("questions", "At least one question is required");
         } else {
@@ -165,46 +151,61 @@ public class SurveyController {
             }
         }
 
-        return errors;
+        if (!errors.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Validation failed: " + errors);
+        }
     }
 
-    private ResponseEntity<ApiErrorResponse> notFound(String message, String path) {
-        ApiErrorResponse error = ApiErrorResponse.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .error(HttpStatus.NOT_FOUND.getReasonPhrase())
-                .message(message)
-                .path(path)
-                .build();
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    private User getCurrentUser() {
+        String username = getCurrentUsername();
+        if (username == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+        }
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
-    private ResponseEntity<ApiErrorResponse> badRequest(
-            String message,
-            Map<String, String> details,
-            String path
-    ) {
-        ApiErrorResponse error = ApiErrorResponse.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message(message)
-                .path(path)
-                .details(Map.of("fieldErrors", details))
-                .build();
-        return ResponseEntity.badRequest().body(error);
-
+    private User getCurrentUserOrNull() {
+        String username = getCurrentUsername();
+        if (username == null) return null;
+        return userRepository.findByUsername(username).orElse(null);
     }
-
-    //Helpers
-
 
     private String getCurrentUsername() {
-       Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-       if(auth == null || !auth.isAuthenticated()) {
-           return null;
-       }
-       return auth.getPrincipal().toString();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        return auth.getName();
     }
 
+    @PatchMapping("/{id}/draft")
+    public ResponseEntity<SurveyResponseDto> markAsDraft(@PathVariable Long id) {
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanEdit(survey, currentUser);
+
+        Survey updated = surveyService.updateStatus(id, com.ahorahathayoga.SurveySurfer.enums.SurveyStatus.DRAFT);
+        return ResponseEntity.ok(SurveyApiMapper.toResponseDto(updated));
+    }
+
+    // PATCH /api/surveys/{id}/publish
+    @PatchMapping("/{id}/publish")
+    public ResponseEntity<SurveyResponseDto> markAsPublished(@PathVariable Long id) {
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanEdit(survey, currentUser);
+
+        // You could add extra validation here, e.g., ensuring the survey has questions before publishing
+        if (survey.getQuestions().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot publish a survey with no questions");
+        }
+
+        Survey updated = surveyService.updateStatus(id, com.ahorahathayoga.SurveySurfer.enums.SurveyStatus.PUBLISHED);
+        return ResponseEntity.ok(SurveyApiMapper.toResponseDto(updated));
+    }
 }

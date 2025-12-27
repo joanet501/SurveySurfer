@@ -10,4 +10,6 @@ public interface AuthService {
     AuthDtos.AuthResponse login(AuthDtos.LoginRequest request);
 
     AuthDtos.AuthMeResponse me();
+
+
 }
