@@ -3,6 +3,8 @@ package com.ahorahathayoga.SurveySurfer.repository;
 import com.ahorahathayoga.SurveySurfer.model.Response;
 import com.ahorahathayoga.SurveySurfer.model.Survey;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +17,10 @@ public interface ResponseRepository extends JpaRepository<Response, Long> {
             LocalDateTime from,
             LocalDateTime to
     );
+
+    Page<Response> findBySurveyIdOrderBySubmittedAtDesc(Long surveyId, Pageable pageable);
+
+    List<Response> findBySurveyId(Long surveyId);
 
     // For dashboard stats, last N responses, etc.
     List<Response> findTop50BySurveyOrderBySubmittedAtDesc(Survey survey);

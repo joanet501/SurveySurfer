@@ -1,5 +1,8 @@
 package com.ahorahathayoga.SurveySurfer.controller.api;
 
+import com.ahorahathayoga.SurveySurfer.dto.stats.SurveyStatsDto;
+import com.ahorahathayoga.SurveySurfer.dto.submission.SubmissionDetailsDto;
+import com.ahorahathayoga.SurveySurfer.dto.submission.SubmissionSummaryDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyCreateUpdateDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyResponseDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
@@ -207,5 +210,57 @@ public class SurveyController {
 
         Survey updated = surveyService.updateStatus(id, com.ahorahathayoga.SurveySurfer.enums.SurveyStatus.PUBLISHED);
         return ResponseEntity.ok(SurveyApiMapper.toResponseDto(updated));
+    }
+
+
+    // GET /api/surveys/{id}/submissions/{submissionId}
+    @GetMapping("/{id}/submissions/{submissionId}")
+    public ResponseEntity<SubmissionDetailsDto> getSubmission(
+            @PathVariable Long id,
+            @PathVariable Long submissionId) {
+
+        // 1. Check if survey exists
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        // 2. Authorization: Only owner/admin can see submissions
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanViewSubmissions(survey, currentUser);
+
+        // 3. Get data
+        SubmissionDetailsDto details = surveyService.getSubmissionDetails(id, submissionId);
+        return ResponseEntity.ok(details);
+    }
+
+    // GET /api/surveys/{id}/submissions
+    @GetMapping("/{id}/submissions")
+    public ResponseEntity<Page<SubmissionSummaryDto>> listSubmissions(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        // Authorization: Only owner/admin
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanViewSubmissions(survey, currentUser);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<SubmissionSummaryDto> submissions = surveyService.getSurveySubmissions(id, pageable);
+
+        return ResponseEntity.ok(submissions);
+    }
+
+    // GET /api/surveys/{id}/stats
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<SurveyStatsDto> getStats(@PathVariable Long id) {
+        Survey survey = surveyService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        User currentUser = getCurrentUser();
+        surveyAuthorizationService.checkCanViewSubmissions(survey, currentUser);
+
+        return ResponseEntity.ok(surveyService.getSurveyStats(id));
     }
 }

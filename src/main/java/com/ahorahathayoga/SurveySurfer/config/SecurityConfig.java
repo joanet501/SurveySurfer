@@ -32,7 +32,8 @@ public class SecurityConfig {
                                 "/",
                                 "/s/**",                     // public survey form
                                 "/api/auth/login", "/api/auth/register",            // login/register
-                                "/api/surveys/slug/**"      // get survey by slug (public)
+                                "/api/surveys/slug/**",// get survey by slug (public)
+                                "/api/public/**"// (public)
                         ).permitAll()
                         .requestMatchers("/api/surveys/**", "/admin/**")
                         .hasAnyRole("ADMIN", "RESEARCHER")

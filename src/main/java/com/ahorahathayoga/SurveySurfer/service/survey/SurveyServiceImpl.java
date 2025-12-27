@@ -1,5 +1,8 @@
 package com.ahorahathayoga.SurveySurfer.service.survey;
 
+import com.ahorahathayoga.SurveySurfer.dto.stats.SurveyStatsDto;
+import com.ahorahathayoga.SurveySurfer.dto.submission.SubmissionDetailsDto;
+import com.ahorahathayoga.SurveySurfer.dto.submission.SubmissionSummaryDto;
 import com.ahorahathayoga.SurveySurfer.dto.submission.SurveySubmissionDto;
 import com.ahorahathayoga.SurveySurfer.dto.survey.SurveyViewDto;
 import com.ahorahathayoga.SurveySurfer.dto.user.UserViewDto;
@@ -19,9 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -117,6 +118,113 @@ public class SurveyServiceImpl implements SurveyService {
         responseRepository.save(response);
     }
 
+    @Override
+    public SubmissionDetailsDto getSubmissionDetails(Long surveyId, Long submissionId) {
+        // 1. Find the response and ensure it belongs to the specified survey
+        Response response = responseRepository.findById(submissionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Submission not found"));
 
+        if (!response.getSurvey().getId().equals(surveyId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Submission does not belong to this survey");
+        }
+
+        // 2. Map to DTO
+        List<SubmissionDetailsDto.AnswerDetailDto> answerDtos = response.getAnswers().stream()
+                .map(a -> SubmissionDetailsDto.AnswerDetailDto.builder()
+                        .questionId(a.getQuestion().getId())
+                        .questionText(a.getQuestion().getText())
+                        .questionType(a.getQuestion().getType().name())
+                        .value(a.getValue())
+                        .build())
+                .toList();
+
+        return SubmissionDetailsDto.builder()
+                .id(response.getId())
+                .surveyId(response.getSurvey().getId())
+                .surveyTitle(response.getSurvey().getTitle())
+                .submittedAt(response.getSubmittedAt())
+                .ipAddress(response.getIpAddress())
+                .answers(answerDtos)
+                .build();
+    }
+
+    @Override
+    public Page<SubmissionSummaryDto> getSurveySubmissions(Long surveyId, org.springframework.data.domain.Pageable pageable) {
+        // We need a method in ResponseRepository to find by Survey ID
+        return responseRepository.findBySurveyIdOrderBySubmittedAtDesc(surveyId, pageable)
+                .map(response -> SubmissionSummaryDto.builder()
+                        .id(response.getId())
+                        .submittedAt(response.getSubmittedAt())
+                        .ipAddress(response.getIpAddress())
+                        .answerCount(response.getAnswers().size())
+                        .build());
+    }
+
+
+    @Override
+    public SurveyStatsDto getSurveyStats(Long surveyId) {
+        Survey survey = surveyRepository.findById(surveyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Survey not found"));
+
+        List<Response> responses = responseRepository.findBySurveyId(surveyId);
+        int totalResponses = responses.size();
+
+        List<SurveyStatsDto.QuestionStatsDto> qStatsList = survey.getQuestions().stream().map(question -> {
+            var statsBuilder = SurveyStatsDto.QuestionStatsDto.builder()
+                    .questionId(question.getId())
+                    .questionText(question.getText())
+                    .type(question.getType().name());
+
+            // Filter all answers for THIS specific question
+            List<String> values = responses.stream()
+                    .flatMap(r -> r.getAnswers().stream())
+                    .filter(a -> a.getQuestion().getId().equals(question.getId()))
+                    .map(Answer::getValue)
+                    .toList();
+
+            switch (question.getType()) {
+                case SCALE:
+                    double avg = values.stream()
+                            .mapToDouble(Double::parseDouble)
+                            .average().orElse(0.0);
+                    statsBuilder.average(avg);
+                    break;
+
+                case RADIO:
+                    Map<String, Integer> counts = new HashMap<>();
+                    values.forEach(v -> counts.merge(v, 1, Integer::sum));
+                    statsBuilder.optionCounts(counts);
+                    break;
+
+                case MULTIPLE:
+                    // Multiple values are stored as JSON strings like ["Opt1", "Opt2"]
+                    Map<String, Integer> mCounts = new HashMap<>();
+                    values.forEach(v -> {
+                        try {
+                            // Simple way to parse ["A","B"] without full Jackson overhead for this example
+                            String cleaned = v.replace("[", "").replace("]", "").replace("\"", "");
+                            for (String part : cleaned.split(",")) {
+                                if (!part.trim().isEmpty()) mCounts.merge(part.trim(), 1, Integer::sum);
+                            }
+                        } catch (Exception e) { /* ignore malformed */ }
+                    });
+                    statsBuilder.optionCounts(mCounts);
+                    break;
+
+                case OPEN_TEXT:
+                    statsBuilder.recentAnswers(values.stream().limit(5).toList());
+                    break;
+            }
+
+            return statsBuilder.build();
+        }).toList();
+
+        return SurveyStatsDto.builder()
+                .surveyId(survey.getId())
+                .title(survey.getTitle())
+                .totalResponses(totalResponses)
+                .questionStats(qStatsList)
+                .build();
+    }
 }
 

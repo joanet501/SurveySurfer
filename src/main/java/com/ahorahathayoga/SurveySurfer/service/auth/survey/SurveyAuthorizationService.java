@@ -44,4 +44,13 @@ public class SurveyAuthorizationService {
         }
         // If published, anyone can view (adjust based on your needs)
     }
+
+    public void checkCanViewSubmissions(Survey survey, User currentUser) {
+        boolean isOwner = survey.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to view submissions for this survey");
+        }
+    }
 }
